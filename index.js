@@ -14,9 +14,10 @@ import {
     characters,
     eventSource,
     event_types,
+    saveSettingsDebounced,
 } from '../../../../script.js';
 
-import { extension_settings, saveExtensionSettings } from '../../../extensions.js';
+import { extension_settings } from '../../../extensions.js';
 
 // =============================================================================
 // Constants
@@ -84,7 +85,7 @@ function getOrCreateUsername() {
 
 function saveSettings() {
     extension_settings[EXTENSION_NAME] = settings;
-    saveExtensionSettings();
+    saveSettingsDebounced();
 }
 
 // =============================================================================
@@ -850,7 +851,7 @@ export async function init() {
     } else {
         settings = { ...defaultSettings };
         extension_settings[EXTENSION_NAME] = settings;
-        saveExtensionSettings();
+        saveSettingsDebounced();
     }
 
     // Render UI
