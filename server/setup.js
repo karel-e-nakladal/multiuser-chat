@@ -1,21 +1,37 @@
 /**
  * Setup Script for Multi-User Chat Server Plugin
- * Auto-patches SillyTavern's server.js — run from the extension's server/ directory.
+ * 
+ * Patches SillyTavern's server.js to wire in the Socket.IO server.
+ * Run this from the HOST (not inside Docker) so changes survive restarts.
  *
  * Usage:
- *   cd public/scripts/extensions/third-party/multiuser-chat/server
- *   node setup.js
+ *   node server/setup.js
+ *   node server/setup.js --undo   (remove the plugin from server.js)
  */
 
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+const UNDO = process.argv.includes('--undo');
+
 // ---------------------------------------------------------------------------
-// Walk up from our directory to find server.js (up to 12 levels for Docker)
+// Detect if we're running inside a Docker container
+// ---------------------------------------------------------------------------
+function isInsideDocker() {
+    try {
+        return readFileSync('/proc/1/cgroup', 'utf-8').includes('docker');
+    } catch {
+        // /home/node/app is the SillyTavern Docker image's standard WORKDIR
+        return existsSync('/home/node/app/server.js') && __dirname.startsWith('/home/node/app');
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Walk up from our directory to find server.js (up to 12 levels)
 // ---------------------------------------------------------------------------
 function findServerJs(startDir) {
     let dir = resolve(startDir);
@@ -33,7 +49,7 @@ function findServerJs(startDir) {
 }
 
 // ---------------------------------------------------------------------------
-// Compute a POSIX relative path from rootDir to the plugin file
+// Strip leading rootDir from pluginPath, produce a POSIX relative import
 // ---------------------------------------------------------------------------
 function computeImportPath(rootDir, pluginPath) {
     const rel = pluginPath
@@ -46,14 +62,28 @@ function computeImportPath(rootDir, pluginPath) {
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
+const inDocker = isInsideDocker();
+
+if (inDocker) {
+    console.log('');
+    console.log('⚠  Detected Docker environment.');
+    console.log('   Changes made inside the container will be LOST on "docker compose down -v".');
+    console.log('   Run setup.js on the HOST instead:');
+    console.log('');
+    console.log('   node public/scripts/extensions/third-party/multiuser-chat/server/setup.js');
+    console.log('');
+    console.log('   Continuing anyway (will work until the next docker compose down -v)...');
+    console.log('');
+}
+
 const result = findServerJs(__dirname);
 
 if (!result) {
     console.log('');
     console.log('⚠  Could not find server.js automatically.');
-    console.log('   Add these lines to your SillyTavern server.js manually:');
+    console.log('   Add these three lines to your SillyTavern server.js:');
     console.log('');
-    console.log('   import { initMultiUserChatServer, addMultiUserRoutes } from \'./public/scripts/extensions/third-party/multiuser-chat/server/plugin.js\';');
+    console.log("   import { initMultiUserChatServer, addMultiUserRoutes } from './public/scripts/extensions/third-party/multiuser-chat/server/plugin.js';");
     console.log('   const io = initMultiUserChatServer(httpServer);   // after http.createServer');
     console.log('   addMultiUserRoutes(app);                          // before server.listen');
     console.log('');
@@ -64,9 +94,9 @@ const { serverJs, rootDir } = result;
 const pluginFile = join(__dirname, 'plugin.js');
 const importPath = computeImportPath(rootDir, pluginFile);
 
-const IMPORT_PATTERN = /^import\s*\{[^}]*\binitMultiUserChatServer\b[^}]*\}\s*from\s*['"][^'"]+['"];?\s*\n?/m;
-const INIT_PATTERN  = /^const\s+io\s*=\s*initMultiUserChatServer\s*\(\s*httpServer\s*\);?\s*\n?/m;
-const ROUTES_PATTERN = /^addMultiUserRoutes\s*\(\s*app\s*\);?\s*\n?/m;
+const IMPORT_REGEX = /^import\s*\{[^}]*\binitMultiUserChatServer\b[^}]*\}\s*from\s*['"][^'"]+['"];?\s*\n?/m;
+const INIT_REGEX  = /^const\s+io\s*=\s*initMultiUserChatServer\s*\(\s*httpServer\s*\);?\s*\n?/m;
+const ROUTES_REGEX = /^addMultiUserRoutes\s*\(\s*app\s*\);?\s*\n?/m;
 
 const newImport = `import { initMultiUserChatServer, addMultiUserRoutes } from '${importPath}';\n`;
 const newInit   = `const io = initMultiUserChatServer(httpServer);\n`;
@@ -74,38 +104,47 @@ const newRoutes = `addMultiUserRoutes(app);\n`;
 
 try {
     let content = readFileSync(serverJs, 'utf-8');
+
+    if (UNDO) {
+        const hadImport = IMPORT_REGEX.test(content);
+        const hadInit   = INIT_REGEX.test(content);
+        const hadRoutes = ROUTES_REGEX.test(content);
+
+        content = content.replace(IMPORT_REGEX, '');
+        content = content.replace(INIT_REGEX, '');
+        content = content.replace(ROUTES_REGEX, '');
+
+        if (hadImport || hadInit || hadRoutes) {
+            writeFileSync(serverJs, content, 'utf-8');
+            console.log('✓ Removed MultiUserChat plugin from server.js');
+        } else {
+            console.log('✓ Nothing to undo.');
+        }
+        process.exit(0);
+    }
+
     let modified = false;
 
-    // 1. Remove any stale import / init / routes lines from previous runs
-    if (IMPORT_PATTERN.test(content)) {
-        content = content.replace(IMPORT_PATTERN, '');
-        modified = true;
-    }
-    if (INIT_PATTERN.test(content)) {
-        content = content.replace(INIT_PATTERN, '');
-        modified = true;
-    }
-    if (ROUTES_PATTERN.test(content)) {
-        content = content.replace(ROUTES_PATTERN, '');
-        modified = true;
-    }
+    // Strip any stale lines from previous (possibly broken) runs
+    if (IMPORT_REGEX.test(content)) { content = content.replace(IMPORT_REGEX, ''); modified = true; }
+    if (INIT_REGEX.test(content))  { content = content.replace(INIT_REGEX, '');  modified = true; }
+    if (ROUTES_REGEX.test(content)) { content = content.replace(ROUTES_REGEX, ''); modified = true; }
 
-    // 2. Insert the import after the LAST existing import line
+    // Insert fresh import after the last existing import
     if (!content.includes('initMultiUserChatServer')) {
-        const importMatches = [...content.matchAll(/^import\s+.*$/gm)];
-        if (importMatches.length > 0) {
-            const last = importMatches[importMatches.length - 1];
-            const insertAt = last.index + last[0].length;
-            content = content.slice(0, insertAt) + '\n' + newImport + content.slice(insertAt);
+        const imports = [...content.matchAll(/^import\s+.*$/gm)];
+        if (imports.length > 0) {
+            const last = imports[imports.length - 1];
+            const pos = last.index + last[0].length;
+            content = content.slice(0, pos) + '\n' + newImport + content.slice(pos);
         } else {
-            // No imports at all — prepend
             content = newImport + '\n' + content;
         }
         modified = true;
     }
 
-    // 3. Insert socket init after httpServer creation (handles http AND https)
-    if (!INIT_PATTERN.test(content) && !content.includes('initMultiUserChatServer(httpServer)')) {
+    // Insert init after http(s).createServer call
+    if (!INIT_REGEX.test(content) && !content.includes('initMultiUserChatServer(httpServer)')) {
         const m = content.match(/const\s+\w+\s*=\s*https?\.createServer\(app\)/);
         if (m) {
             const pos = m.index + m[0].length;
@@ -114,8 +153,8 @@ try {
         }
     }
 
-    // 4. Insert routes before server.listen (or app.listen)
-    if (!ROUTES_PATTERN.test(content) && !content.includes('addMultiUserRoutes(app)')) {
+    // Insert routes before .listen()
+    if (!ROUTES_REGEX.test(content) && !content.includes('addMultiUserRoutes(app)')) {
         const m = content.match(/\b(?:server|app|httpServer)\.listen\(/);
         if (m) {
             content = content.slice(0, m.index) + newRoutes + '\n' + content.slice(m.index);
@@ -127,15 +166,19 @@ try {
         writeFileSync(serverJs, content, 'utf-8');
         console.log(`✓ Patched ${serverJs}`);
         console.log(`  Import path: ${importPath}`);
-        console.log('  Restart SillyTavern for changes to take effect.');
+        if (!inDocker) {
+            console.log('  Restart SillyTavern for changes to take effect.');
+        } else {
+            console.log('  Run "docker compose down && docker compose up -d" (no -v) to apply.');
+        }
     } else {
         console.log('✓ Already up-to-date. Nothing to do.');
     }
 
 } catch (err) {
-    console.error('Error patching server.js:', err.message);
+    console.error('Error:', err.message);
     console.log('');
-    console.log('Add these lines manually:');
+    console.log('Add these lines manually to', serverJs, ':');
     console.log(`  ${newImport.trim()}`);
     console.log(`  ${newInit.trim()}`);
     console.log(`  ${newRoutes.trim()}`);

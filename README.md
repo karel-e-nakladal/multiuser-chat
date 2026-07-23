@@ -1,129 +1,195 @@
 # Multi-User Chat Rooms for SillyTavern
 
-Real-time collaborative chat rooms with AI character group chat support. Multiple human users can chat together alongside AI characters in the same room.
+Real-time collaborative chat rooms. Multiple human users chat together in the same room, with optional AI characters participating via group chat.
 
 ## Features
 
-- Create rooms where multiple users chat simultaneously
-- Group chat support — include multiple AI characters in a room
-- Invite system with shareable codes (`XXX-XXX-XXX`)
-- Real-time messaging via Socket.IO (WebSocket)
-- Typing indicators and online/offline presence
-- Host controls — kick users, manage room settings
-- AI responses broadcast to all participants
-- Chat history sync for late joiners
+- **Rooms** — create, join via invite codes, leave/destroy
+- **Real-time messaging** — Socket.IO WebSocket transport
+- **Group chat** — include multiple AI characters in a room
+- **Invite codes** — human-friendly `XXX-XXX-XXX` format with optional expiry & max uses
+- **Presence** — online/offline indicators, typing notifications
+- **Host controls** — kick users, manage room settings, revoke invites
+- **Chat history sync** — late joiners receive the last 200 messages
+- **Public API** — other extensions can send/receive messages via `MultiUserChatAPI`
 
-## Quick Install
+---
 
-### 1. Install via SillyTavern button
+## Installation
 
-1. Go to **Extensions** → click **"Install Extension"**
-2. Paste the repo URL: `https://github.com/SillyTavern/SillyTavern-MultiUserChat`
-3. Click **Install** — the UI, JS, and CSS are installed
-4. Enable the extension in the Extensions panel
+### 1. Install the extension files
+
+**Option A — SillyTavern's built-in installer:**
+
+1. SillyTavern → **Extensions** → **Install Extension**
+2. Paste the repo URL
+3. Click **Install**
+
+**Option B — Manual copy:**
+
+```bash
+cp -r extensions/multiuser-chat \
+     /path/to/SillyTavern/public/scripts/extensions/third-party/multiuser-chat
+```
 
 ### 2. Install server dependencies
 
 ```bash
-cd SillyTavern/public/scripts/extensions/third-party/SillyTavern-MultiUserChat/server
+cd SillyTavern/public/scripts/extensions/third-party/multiuser-chat/server
 npm install
 ```
 
-### 3. Register the server plugin
+### 3. Wire the plugin into SillyTavern
 
-Add these lines to SillyTavern's `server.js`:
-
-```js
-// Near the top, with other imports:
-import { initMultiUserChatServer, addMultiUserRoutes }
-  from './public/scripts/extensions/third-party/SillyTavern-MultiUserChat/server/plugin.js';
-
-// After const server = http.createServer(app):
-const io = initMultiUserChatServer(httpServer);
-
-// Before server.listen():
-addMultiUserRoutes(app);
-```
-
-Or run the auto-patcher:
+Run the auto-patcher **from the host** (not inside Docker):
 
 ```bash
-node public/scripts/extensions/third-party/SillyTavern-MultiUserChat/server/setup.js
+node SillyTavern/public/scripts/extensions/third-party/multiuser-chat/server/setup.js
 ```
 
+This adds three lines to `server.js`:
+- An import for the plugin (after the last existing import)
+- Socket.IO initialization (after the HTTP server is created)
+- REST API routes (before the server starts listening)
+
+If the patcher can't find `server.js`, it prints the exact lines to add manually.
+
+To undo: `node setup.js --undo`
+
+**Docker users:** run setup.js on the **host machine**, not inside the container.
+Changes made inside the container are lost on `docker compose down -v`.
+
 ### 4. Restart SillyTavern
+
+```bash
+# Bare-metal — stop and start however you normally do
+
+# Docker (no -v!)
+docker compose down && docker compose up -d
+```
+
+### 5. Enable the extension
+
+SillyTavern → **Extensions** → find **Multi-User Chat Rooms** → toggle it on.
 
 ---
 
 ## Usage
 
-### Host a Room
+### Connect
 
-1. In the extension panel, enter your **display name** and click **Connect to Server**
-2. Go to the **Create Room** tab
-3. Enter a room name
-4. *(Optional)* Enable **Group Chat** and select AI characters
-5. Click **Create Room**
-6. Click **Invite** to generate a shareable code
+1. In the extension panel, enter a **display name** (or keep the generated one)
+2. Leave **Server URL** empty — it uses the same server you're already on
+3. Click **Connect to Server**
+4. Status dot turns green: *"Connected"*
 
-### Join a Room
+### Create a room & invite others
 
-1. Click **Connect to Server**
-2. Go to the **Join Room** tab
-3. Enter the invite code from the host
-4. Click **Validate** to preview the room
-5. Click **Join Room**
+1. **Create Room** tab → enter a room name
+2. *(Optional)* toggle **Group Chat** to include AI characters, then check the ones you want
+3. Click **Create Room**
+4. Click the **Invite** button → a code like `A3F-K9M-W2P` appears
+5. Click **Copy** and send it to the other person
 
-### Invite Codes
+### Join someone else's room
 
-- Format: `XXX-XXX-XXX` (e.g. `A3F-K9M-W2P`)
-- Only the host can generate invites
-- Codes can be set to expire or have max uses
+1. Get the 9-character invite code from the host
+2. **Join Room** tab → paste it in
+3. Click **Validate** to preview the room (name, users online, characters)
+4. Click **Join Room**
+
+### Leave / close a room
+
+- **Leave Room** as a participant → you leave; room stays alive for others
+- **Leave Room** as the host → prompted "close the room for everyone?"
+  - Yes → destroys the room and disconnects all users
+  - No → you leave but the room becomes orphaned (no host)
+
+### Kick a user (host only)
+
+Click the ✕ next to a user's name in the user list. Kicked users cannot rejoin.
 
 ---
 
-## File Structure
+## Invite codes
 
-```
-repo-root/
-├── manifest.json     # Extension manifest
-├── index.html        # UI template
-├── index.js          # Client-side extension logic
-├── style.css         # UI styles
-└── server/
-    ├── plugin.js     # Express plugin entry point
-    ├── index.js      # Socket.IO server + room management
-    ├── setup.js      # Auto-patcher for server.js
-    └── package.json  # Server dependencies (socket.io, uuid)
-```
+| Property | Default | Description |
+|----------|---------|-------------|
+| Format | `XXX-XXX-XXX` | 9 characters, no I/O/0/1 (unambiguous) |
+| Expiry | 24 hours | Set via the API; UI defaults to 24h |
+| Max uses | Unlimited | 0 = unlimited; set a number to cap it |
 
-## API for Other Extensions
+Only the room host can generate, list, or revoke invite codes.
+
+---
+
+## API for other extensions
+
+The client exposes `globalThis.MultiUserChatAPI`:
 
 ```js
-// Send a message to all room participants
+// Check if a multi-user session is active
+if (MultiUserChatAPI.isActive) {
+    console.log(MultiUserChatAPI.currentRoom); // { id, name, users, ... }
+    console.log(MultiUserChatAPI.users);       // array of connected users
+}
+
+// Send a user message to the room
 MultiUserChatAPI.sendUserMessage('Hello everyone!');
 
-// Broadcast an AI response
-MultiUserChatAPI.sendAiMessage('Greetings!', 'Character Name');
+// Broadcast an AI response to all participants
+MultiUserChatAPI.sendAiMessage('Greetings, travelers.', 'Gandalf');
 
-// Check if active
-if (MultiUserChatAPI.isActive) {
-    console.log(MultiUserChatAPI.currentRoom);
-    console.log(MultiUserChatAPI.users);
-}
+// Create a room from a group chat
+MultiUserChatAPI.createFromGroupChat('Adventure Room', ['Gandalf', 'Frodo']);
+
+// Join by invite code
+MultiUserChatAPI.joinByInvite('A3F-K9M-W2P');
+
+// Leave the current room
+MultiUserChatAPI.leaveRoom();
+
+// Generate an invite (host only)
+MultiUserChatAPI.generateInviteCode(24, 10); // 24h expiry, max 10 uses
 ```
+
+---
+
+## File structure
+
+```
+multiuser-chat/
+├── manifest.json          # SillyTavern extension manifest
+├── index.html             # UI template injected into Extensions panel
+├── index.js               # Client-side logic (socket.io, UI, API)
+├── style.css              # UI styles
+└── server/
+    ├── package.json       # socket.io, uuid
+    ├── plugin.js          # Express plugin — init + REST routes
+    ├── index.js           # Socket.IO server — rooms, invites, messaging
+    └── setup.js           # Auto-patcher for SillyTavern's server.js
+```
+
+---
 
 ## Troubleshooting
 
-| Problem | Solution |
-|---------|----------|
-| `[object Event]` load error | Check browser console (F12) for import errors |
-| Socket.IO fails to load | Needs internet on first use (loads from CDN) |
-| Can't connect to server | Verify server plugin is registered in `server.js` and ST was restarted |
-| Invite code doesn't work | Code may have expired or room was closed by host |
-| Extension not visible | Go to Extensions panel and enable "Multi-User Chat Rooms" |
+| Symptom | Fix |
+|---------|-----|
+| Extension not visible in menu | Go to Extensions panel and enable it; check browser console (F12) for import errors |
+| `saveExtensionSettings is not exported` | Outdated `index.js` — recopy the latest version |
+| `ERR_MODULE_NOT_FOUND … plugin.js` on startup | Stale import path in `server.js` — re-run `setup.js` |
+| `404` on `/api/multiuser/socket.io/` | Plugin not registered in `server.js` — run `setup.js` and restart |
+| `xhr poll error` when connecting | Server isn't running Socket.IO — verify all 3 lines in `server.js` |
+| Changes lost after Docker restart | You ran setup inside the container — run it on the **host** |
+| AI messages show *"Gandalf as Gandalf"* | Fixed in latest `index.js` — recopy it |
+| Users appear offline right after joining | Fixed in latest `index.js` — recopy it |
+| Kicked users can rejoin with new invite | Fixed in latest `server/index.js` — recopy it |
 
-To view extension logs, open the browser console (**F12** → **Console**) and look for `[MultiUserChat]`.
+To view logs: browser console (**F12 → Console**) filter for `[MultiUserChat]`.
+Server-side logs appear in the SillyTavern terminal or `docker logs` output.
+
+---
 
 ## License
 
