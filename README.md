@@ -1,4 +1,5 @@
-# Multi-User Chat Rooms Extension for SillyTavern FULLY VIBECODED
+# Multi-User Chat Rooms Extension for SillyTavern 
+# FULLY VIBECODED
 
 A SillyTavern extension that enables real-time multi-user chat rooms with AI character group chat support. Convert any chat room into a collaborative space where multiple human users can chat together alongside AI characters.
 
