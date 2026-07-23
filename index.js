@@ -108,6 +108,13 @@ async function loadSocketIO() {
 function connectToServer() {
     if (socket && socket.connected) return;
 
+    // Clean up any stale disconnected socket before creating a new one
+    if (socket) {
+        socket.removeAllListeners();
+        socket.disconnect();
+        socket = null;
+    }
+
     const serverUrl = settings.serverUrl || window.location.origin;
 
     socket = io(serverUrl, {
@@ -134,6 +141,14 @@ function connectToServer() {
                     currentRoom = res.room;
                     updateRoomDisplay();
                     updateUserList(res.users);
+                } else {
+                    // Room no longer exists (host closed it while we were away)
+                    removeRoomFromSettings(currentRoom.id);
+                    currentRoom = null;
+                    $panel.addClass('hidden');
+                    $userList.empty();
+                    $messageFeed.empty();
+                    updateConnectionStatus('connected', 'Connected (room was closed)');
                 }
             });
         }
@@ -476,11 +491,16 @@ function addMessageToFeed(message, isOwn = false) {
     const $feed = $('#mu-message-feed');
     const isAi = message.type === 'ai';
 
+    // AI messages: senderName IS the character, no "as" label needed
+    const charLabel = (!isAi && message.characterName)
+        ? `<span class="mu-message-char">as ${escapeHtml(message.characterName)}</span>`
+        : '';
+
     const msgHtml = `
         <div class="mu-message-item ${isOwn ? 'mu-own-message' : ''} ${isAi ? 'mu-ai-message' : ''}">
             <div class="mu-message-header">
                 <span class="mu-message-sender">${escapeHtml(message.senderName)}</span>
-                ${message.characterName ? `<span class="mu-message-char">as ${escapeHtml(message.characterName)}</span>` : ''}
+                ${charLabel}
                 <span class="mu-message-time">${formatTime(message.timestamp)}</span>
             </div>
             <div class="mu-message-content">${escapeHtml(message.content)}</div>
@@ -691,7 +711,7 @@ function setupEventHandlers() {
     // App ready
     eventSource.on(event_types.APP_READY, () => {
         if (settings.autoConnect && settings.isEnabled) {
-            connectAsUser();
+            connectAsUser().catch(err => warn('Auto-connect failed:', err));
         }
     });
 }

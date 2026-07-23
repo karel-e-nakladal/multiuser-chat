@@ -553,9 +553,9 @@ export function initSocketServer(httpServer) {
                     return callback({ success: false, error: 'Unauthorized.' });
                 }
 
-                const targetUser = room.users.find(u => u.id === data.targetUserId);
-                if (targetUser) {
-                    targetUser.isOnline = false;
+                const idx = room.users.findIndex(u => u.id === data.targetUserId);
+                if (idx !== -1) {
+                    room.users.splice(idx, 1); // fully remove, not just mark offline
                 }
 
                 // Notify the kicked user
