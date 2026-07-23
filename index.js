@@ -1,4 +1,5 @@
 /**
+ * 
  * Multi-User Chat Rooms Extension
  *
  * Enables real-time collaborative chat rooms with:
@@ -10,25 +11,18 @@
  */
 
 import {
-    chat,
-    chat_metadata,
     characters,
     eventSource,
     event_types,
-    getRequestHeaders,
-    this_chid,
-    system_message_types,
 } from '../../../../script.js';
 
 import { extension_settings, saveExtensionSettings } from '../../../extensions.js';
-import { selected_group } from '../../../group-chats.js';
-import { t } from '../../../i18n.js';
-import { debounceAsync } from '../../../utils.js';
 
 // =============================================================================
 // Constants
 // =============================================================================
-const EXTENSION_NAME = 'SillyTavern-MultiUserChat';
+const EXTENSION_NAME = 'multiuser-chat';
+const THIS_DIR = new URL('.', import.meta.url).href;
 
 const defaultSettings = {
     username: '',
@@ -46,7 +40,6 @@ let settings = defaultSettings;
 let socket = null;
 let currentRoom = null;          // Currently joined room info
 let isConnected = false;
-let typingTimeout = null;
 let io = null;                   // socket.io-client library instance
 
 // UI Elements
@@ -99,7 +92,7 @@ function saveSettings() {
 // =============================================================================
 
 async function loadSocketIO() {
-    if (typeof io !== 'undefined') return;
+    if (io !== null && typeof io === 'function') return;
     return new Promise((resolve, reject) => {
         const script = document.createElement('script');
         script.src = 'https://cdn.socket.io/4.7.4/socket.io.min.js';
@@ -138,7 +131,9 @@ function connectToServer() {
         if (currentRoom && currentRoom.id) {
             socket.emit('room:rejoin', { roomId: currentRoom.id }, (res) => {
                 if (res.success) {
-                    updateRoomState(res.room, res.users);
+                    currentRoom = res.room;
+                    updateRoomDisplay();
+                    updateUserList(res.users);
                 }
             });
         }
@@ -178,13 +173,13 @@ function connectToServer() {
 
     socket.on('room:user-kicked', (data) => {
         if (data.userId === getOrCreateUserId()) {
-            leaveRoom(true);
+            leaveRoom(false);  // kicked user is not the host, just leave
             showToast(`You have been removed: ${data.reason}`, 'warning');
         }
     });
 
     socket.on('room:destroyed', (data) => {
-        leaveRoom(true);
+        leaveRoom(false);  // room already destroyed server-side
         showToast('The room has been closed by the host.', 'info');
     });
 
@@ -454,6 +449,10 @@ function updateUserList(users) {
 }
 
 function addUserToList(user) {
+    // Normalize: server sends 'userId' but we use 'id' internally
+    if (user.userId && !user.id) user.id = user.userId;
+    // Server broadcast may omit isOnline — joining users are always online
+    if (user.isOnline === undefined) user.isOnline = true;
     const users = currentRoom?.users || [];
     if (!users.find(u => u.id === user.id)) {
         users.push(user);
@@ -522,7 +521,7 @@ function showTypingIndicator(userId, username, characterName, isTyping) {
         `);
         $feed.scrollTop($feed[0].scrollHeight);
     } else {
-        $(`#${indicatorId}`).fadeOut(200, () => $(this).remove());
+        $(`#${indicatorId}`).fadeOut(200, function () { $(this).remove(); });
     }
 }
 
@@ -837,7 +836,7 @@ export async function init() {
     // Render UI
     const $extBlock = $('#extensions_settings');
     if ($extBlock.length) {
-        const template = await $.get(`/scripts/extensions/third-party/${EXTENSION_NAME}/index.html`);
+        const template = await $.get(THIS_DIR + 'index.html');
         $extBlock.append(template);
     }
 

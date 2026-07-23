@@ -11,7 +11,7 @@
  *   initMultiUserChatServer(httpServer);
  */
 
-import { initSocketServer } from './index.js';
+import { initSocketServer, getRoomManager } from './index.js';
 
 /**
  * Initialize the Multi-User Chat server plugin
@@ -20,12 +20,7 @@ import { initSocketServer } from './index.js';
  */
 export function initMultiUserChatServer(httpServer) {
     console.log('[MultiUserChat Plugin] Initializing server-side plugin...');
-    
     const io = initSocketServer(httpServer);
-    
-    // Optional: Add REST API endpoints if needed
-    // e.g., for health check, room listing, etc.
-    
     console.log('[MultiUserChat Plugin] Server-side plugin initialized successfully.');
     return io;
 }
@@ -35,7 +30,8 @@ export function initMultiUserChatServer(httpServer) {
  * @param {express.Application} app - Express app instance
  */
 export function addMultiUserRoutes(app) {
-    // Health check / stats endpoint
+    const manager = getRoomManager();
+
     app.get('/api/multiuser/health', (_req, res) => {
         res.json({
             status: 'ok',
@@ -44,10 +40,8 @@ export function addMultiUserRoutes(app) {
         });
     });
     
-    // Get public room count (for discovery)
+    // Get public room count
     app.get('/api/multiuser/stats', (_req, res) => {
-        const { getRoomManager } = require('./index.js');
-        const manager = getRoomManager();
         const roomsList = manager.listRooms();
         
         res.json({
