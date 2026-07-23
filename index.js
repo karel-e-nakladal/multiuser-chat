@@ -21,9 +21,9 @@ import {
 } from '../../../script.js';
 
 import { extension_settings, saveExtensionSettings } from '../../extensions.js';
-import { selected_group } from '../../group-chats.js';
-import { t } from '../../i18n.js';
-import { debounceAsync } from '../../utils.js';
+import { selected_group } from '../../../group-chats.js';
+import { t } from '../../../i18n.js';
+import { debounceAsync } from '../../../utils.js';
 
 // =============================================================================
 // Constants
