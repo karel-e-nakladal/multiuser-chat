@@ -1,0 +1,673 @@
+/* =============================================================================
+   Multi-User Chat Rooms Extension - Styles
+   ============================================================================= */
+
+.multiuser-chat-container {
+    background: var(--SmartThemeBlurTintColor, rgba(0, 0, 0, 0.3));
+    border: 1px solid var(--SmartThemeBorderColor, #333);
+    border-radius: 10px;
+    padding: 16px;
+    margin: 12px 0;
+    font-family: var(--main-font-family, sans-serif);
+    color: var(--SmartThemeBodyColor, #e0e0e0);
+    max-width: 100%;
+}
+
+/* =============================================================================
+   Header
+   ============================================================================= */
+
+.mu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--SmartThemeBorderColor, #444);
+}
+
+.mu-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.mu-title {
+    margin: 0;
+    font-size: 1.1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mu-header-right {
+    display: flex;
+    gap: 6px;
+}
+
+/* =============================================================================
+   Status Indicator
+   ============================================================================= */
+
+.mu-status {
+    font-size: 0.75em;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.mu-status-connected {
+    background: rgba(76, 175, 80, 0.25);
+    color: #4caf50;
+    border: 1px solid rgba(76, 175, 80, 0.4);
+}
+
+.mu-status-disconnected {
+    background: rgba(158, 158, 158, 0.25);
+    color: #9e9e9e;
+    border: 1px solid rgba(158, 158, 158, 0.4);
+}
+
+.mu-status-error {
+    background: rgba(244, 67, 54, 0.25);
+    color: #f44336;
+    border: 1px solid rgba(244, 67, 54, 0.4);
+}
+
+.mu-status-in-room {
+    background: rgba(33, 150, 243, 0.25);
+    color: #2196f3;
+    border: 1px solid rgba(33, 150, 243, 0.4);
+}
+
+/* =============================================================================
+   Buttons
+   ============================================================================= */
+
+.mu-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-size: 0.85em;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    background: var(--SmartThemeButtonBg, #2a2a2a);
+    color: var(--SmartThemeBodyColor, #e0e0e0);
+}
+
+.mu-btn:hover {
+    filter: brightness(1.2);
+}
+
+.mu-btn:active {
+    transform: scale(0.97);
+}
+
+.mu-btn-primary {
+    border-color: #2196f3;
+    color: #2196f3;
+}
+
+.mu-btn-success {
+    background: rgba(76, 175, 80, 0.2);
+    border-color: #4caf50;
+    color: #4caf50;
+}
+
+.mu-btn-danger {
+    background: rgba(244, 67, 54, 0.15);
+    border-color: #f44336;
+    color: #f44336;
+}
+
+.mu-btn-accent {
+    background: rgba(156, 39, 176, 0.2);
+    border-color: #9c27b0;
+    color: #ce93d8;
+}
+
+.mu-btn-secondary {
+    border-color: var(--SmartThemeBorderColor, #555);
+}
+
+.mu-btn-icon {
+    padding: 6px 10px;
+    font-size: 0.9em;
+}
+
+.mu-btn-sm {
+    padding: 4px 10px;
+    font-size: 0.75em;
+}
+
+.mu-btn-xs {
+    padding: 2px 6px;
+    font-size: 0.7em;
+}
+
+.mu-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* =============================================================================
+   Panels
+   ============================================================================= */
+
+.mu-panel {
+    margin: 10px 0;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    border: 1px solid var(--SmartThemeBorderColor, #333);
+}
+
+.mu-panel.hidden,
+.hidden {
+    display: none !important;
+}
+
+/* =============================================================================
+   Form Elements
+   ============================================================================= */
+
+.mu-form-group {
+    margin-bottom: 10px;
+}
+
+.mu-form-group label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 0.85em;
+    font-weight: 500;
+    color: var(--SmartThemeBodyColor, #ccc);
+}
+
+.mu-form-group label small {
+    font-weight: normal;
+    opacity: 0.7;
+}
+
+.mu-form-group input[type="text"] {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--SmartThemeBorderColor, #444);
+    background: var(--SmartThemeInputBg, #1a1a1a);
+    color: var(--SmartThemeBodyColor, #e0e0e0);
+    font-size: 0.9em;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+.mu-form-group input[type="text"]:focus {
+    outline: none;
+    border-color: #2196f3;
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.15);
+}
+
+.mu-checkbox {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+
+.mu-checkbox input[type="checkbox"] {
+    accent-color: #2196f3;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+/* =============================================================================
+   Tabs
+   ============================================================================= */
+
+.mu-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+    border-bottom: 2px solid var(--SmartThemeBorderColor, #333);
+}
+
+.mu-tab {
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    color: var(--SmartThemeBodyColor, #aaa);
+    cursor: pointer;
+    font-size: 0.85em;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.2s;
+}
+
+.mu-tab:hover {
+    color: #fff;
+}
+
+.mu-tab.active {
+    color: #2196f3;
+    border-bottom-color: #2196f3;
+}
+
+.mu-tab-content.hidden {
+    display: none !important;
+}
+
+/* =============================================================================
+   Character Selector
+   ============================================================================= */
+
+.mu-character-select {
+    margin-bottom: 10px;
+}
+
+.mu-character-list {
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid var(--SmartThemeBorderColor, #333);
+    border-radius: 6px;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.15);
+}
+
+.mu-char-item {
+    padding: 5px 8px;
+    border-radius: 4px;
+    transition: background 0.15s;
+}
+
+.mu-char-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.mu-char-name {
+    font-size: 0.85em;
+}
+
+/* =============================================================================
+   Invite Input
+   ============================================================================= */
+
+.mu-invite-input-wrap {
+    display: flex;
+    gap: 6px;
+}
+
+.mu-invite-input-wrap input {
+    flex: 1;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-family: monospace;
+    font-size: 1em !important;
+}
+
+/* =============================================================================
+   Invite Preview
+   ============================================================================= */
+
+.mu-invite-preview-card {
+    padding: 10px;
+    border-radius: 6px;
+    background: rgba(33, 150, 243, 0.1);
+    border: 1px solid rgba(33, 150, 243, 0.3);
+    margin-bottom: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.85em;
+}
+
+.mu-invite-preview-card.mu-error {
+    background: rgba(244, 67, 54, 0.1);
+    border-color: rgba(244, 67, 54, 0.3);
+    color: #f44336;
+}
+
+/* =============================================================================
+   Room Panel
+   ============================================================================= */
+
+.mu-room-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--SmartThemeBorderColor, #333);
+}
+
+.mu-room-info {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.mu-room-info h4 {
+    margin: 0;
+    font-size: 1em;
+}
+
+.mu-room-actions {
+    display: flex;
+    gap: 6px;
+}
+
+/* =============================================================================
+   Badges
+   ============================================================================= */
+
+.mu-badge {
+    font-size: 0.7em;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.mu-badge-host {
+    background: rgba(255, 193, 7, 0.2);
+    border-color: rgba(255, 193, 7, 0.4);
+    color: #ffc107;
+}
+
+.mu-badge-users {
+    background: rgba(33, 150, 243, 0.15);
+    border-color: rgba(33, 150, 243, 0.3);
+    color: #90caf9;
+}
+
+/* =============================================================================
+   Invite Display
+   ============================================================================= */
+
+.mu-invite-display {
+    margin-bottom: 12px;
+}
+
+.mu-invite-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: rgba(156, 39, 176, 0.1);
+    border: 1px solid rgba(156, 39, 176, 0.3);
+    border-radius: 8px;
+    flex-wrap: wrap;
+}
+
+.mu-invite-label {
+    font-size: 0.8em;
+    opacity: 0.8;
+}
+
+.mu-invite-code-text {
+    font-family: 'Courier New', monospace;
+    font-size: 1.3em;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: #ce93d8;
+    user-select: all;
+}
+
+.mu-invite-expiry {
+    font-size: 0.75em;
+    opacity: 0.6;
+    margin-left: auto;
+}
+
+/* =============================================================================
+   Sections
+   ============================================================================= */
+
+.mu-section {
+    margin-top: 12px;
+}
+
+.mu-section-title {
+    margin: 0 0 8px 0;
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.8;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* =============================================================================
+   User List
+   ============================================================================= */
+
+.mu-user-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.mu-user-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.03);
+    font-size: 0.85em;
+}
+
+.mu-user-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.mu-user-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: #9e9e9e;
+}
+
+.mu-user-item.online .mu-user-status-dot {
+    background: #4caf50;
+    box-shadow: 0 0 6px rgba(76, 175, 80, 0.5);
+}
+
+.mu-user-item.offline .mu-user-status-dot {
+    background: #616161;
+}
+
+.mu-user-name {
+    flex: 1;
+}
+
+.mu-kick-btn {
+    margin-left: auto;
+    opacity: 0.6;
+}
+
+.mu-kick-btn:hover {
+    opacity: 1;
+}
+
+/* =============================================================================
+   Message Feed
+   ============================================================================= */
+
+.mu-message-feed {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid var(--SmartThemeBorderColor, #333);
+    border-radius: 6px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mu-message-item {
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.04);
+    border-left: 3px solid #444;
+}
+
+.mu-message-item.mu-own-message {
+    border-left-color: #2196f3;
+    background: rgba(33, 150, 243, 0.08);
+}
+
+.mu-message-item.mu-ai-message {
+    border-left-color: #9c27b0;
+    background: rgba(156, 39, 176, 0.08);
+}
+
+.mu-message-header {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    margin-bottom: 4px;
+    font-size: 0.75em;
+    opacity: 0.8;
+}
+
+.mu-message-sender {
+    font-weight: 600;
+    color: #90caf9;
+}
+
+.mu-message-char {
+    font-style: italic;
+    opacity: 0.7;
+}
+
+.mu-message-time {
+    margin-left: auto;
+    font-size: 0.9em;
+    opacity: 0.5;
+}
+
+.mu-message-content {
+    font-size: 0.88em;
+    line-height: 1.4;
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+
+/* =============================================================================
+   System Messages
+   ============================================================================= */
+
+.mu-system-message {
+    text-align: center;
+    padding: 4px 8px;
+    font-size: 0.75em;
+    opacity: 0.6;
+    font-style: italic;
+}
+
+/* =============================================================================
+   Typing Indicator
+   ============================================================================= */
+
+.mu-typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    font-size: 0.8em;
+    opacity: 0.7;
+    font-style: italic;
+}
+
+.mu-typing-dots span {
+    display: inline-block;
+    animation: mu-typing-bounce 1.4s infinite ease-in-out both;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.mu-typing-dots span:nth-child(1) { animation-delay: 0s; }
+.mu-typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.mu-typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes mu-typing-bounce {
+    0%, 80%, 100% {
+        transform: translateY(0);
+        opacity: 0.4;
+    }
+    40% {
+        transform: translateY(-4px);
+        opacity: 1;
+    }
+}
+
+/* =============================================================================
+   Scrollbar Styling
+   ============================================================================= */
+
+.mu-message-feed::-webkit-scrollbar,
+.mu-user-list::-webkit-scrollbar,
+.mu-character-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.mu-message-feed::-webkit-scrollbar-track,
+.mu-user-list::-webkit-scrollbar-track,
+.mu-character-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.mu-message-feed::-webkit-scrollbar-thumb,
+.mu-user-list::-webkit-scrollbar-thumb,
+.mu-character-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+}
+
+.mu-message-feed::-webkit-scrollbar-thumb:hover,
+.mu-user-list::-webkit-scrollbar-thumb:hover,
+.mu-character-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* =============================================================================
+   Settings Panel
+   ============================================================================= */
+
+#mu-settings-panel h4 {
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
+/* =============================================================================
+   Responsive Adjustments
+   ============================================================================= */
+
+@media (max-width: 480px) {
+    .mu-room-header {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .mu-header {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .mu-invite-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
