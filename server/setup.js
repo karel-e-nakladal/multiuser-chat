@@ -1,93 +1,105 @@
 /**
  * Setup Script for Multi-User Chat Server Plugin
- * 
- * This script patches SillyTavern's server.js to register the multi-user chat
- * Socket.IO server. Run from the SillyTavern root directory:
- * 
- *   node public/scripts/extensions/multiuser-chat/server/setup.js
- * 
- * Or manually add the imports to your server.js file.
+ * Auto-patches SillyTavern's server.js. Run from anywhere.
  */
 
 import { readFileSync, writeFileSync } from 'fs';
-import { join, dirname } from 'path';
+import { join, dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const SERVER_JS_PATH = join(__dirname, '..', '..', '..', '..', '..', 'server.js');
+// Walk up to find SillyTavern root (where server.js lives)
+function findServerJs(startDir) {
+    let dir = resolve(startDir);
+    for (let i = 0; i < 10; i++) {
+        const candidate = join(dir, 'server.js');
+        try { readFileSync(candidate); return { serverJs: candidate, rootDir: dir }; }
+        catch (_) {}
+        const parent = dirname(dir);
+        if (parent === dir) break;
+        dir = parent;
+    }
+    return null;
+}
 
-const IMPORT_LINE = `import { initMultiUserChatServer, addMultiUserRoutes } from './public/scripts/extensions/multiuser-chat/server/plugin.js';`;
-const INIT_LINE = `    const io = initMultiUserChatServer(httpServer);`;
-const ROUTES_LINE = `    addMultiUserRoutes(app);`;
+function computeImportPath(rootDir, pluginPath) {
+    return './' + pluginPath.replace(rootDir, '').replace(/^\//, '').replace(/\\/g, '/');
+}
+
+const result = findServerJs(__dirname);
+
+if (!result) {
+    console.error('Could not find server.js. Add these lines manually:');
+    console.error(`
+import { initMultiUserChatServer, addMultiUserRoutes } from './extensions/multiuser-chat/server/plugin.js';
+
+// After const server = http.createServer(app):
+const io = initMultiUserChatServer(httpServer);
+
+// Before server.listen():
+addMultiUserRoutes(app);
+`);
+    process.exit(1);
+}
+
+const { serverJs, rootDir } = result;
+const pluginFile = join(__dirname, 'plugin.js');
+const importPath = computeImportPath(rootDir, pluginFile);
+
+const IMPORT_LINE = `import { initMultiUserChatServer, addMultiUserRoutes } from '${importPath}';`;
+const INIT_LINE = `const io = initMultiUserChatServer(httpServer);`;
+const ROUTES_LINE = `addMultiUserRoutes(app);`;
 
 try {
-    let content = readFileSync(SERVER_JS_PATH, 'utf-8');
-    let modified = false;
+    let content = readFileSync(serverJs, 'utf-8');
 
-    // Check if already patched
     if (content.includes('initMultiUserChatServer')) {
-        console.log('✓ Multi-User Chat server plugin is already registered.');
+        console.log('✓ Already registered. Nothing to do.');
         process.exit(0);
     }
 
-    // Add import near other extension imports
+    let modified = false;
+
+    // Add import after last import line
     if (!content.includes(IMPORT_LINE)) {
-        // Find the last import from './public/scripts/extensions'
-        const importRegex = /import.*from\s+['"]\.\/public\/scripts\/extensions\/[^'"]+['"];?/g;
-        const imports = [...content.matchAll(importRegex)];
-        
-        if (imports.length > 0) {
-            const lastImport = imports[imports.length - 1];
-            const insertPos = lastImport.index + lastImport[0].length;
-            content = content.slice(0, insertPos) + '\n' + IMPORT_LINE + content.slice(insertPos);
+        const lastImport = content.lastIndexOf('import ');
+        const lineEnd = content.indexOf('\n', lastImport);
+        if (lastImport >= 0 && lineEnd >= 0) {
+            content = content.slice(0, lineEnd + 1) + IMPORT_LINE + '\n' + content.slice(lineEnd + 1);
             modified = true;
         }
     }
 
     // Add init after httpServer creation
-    // Find: const server = http.createServer(app);
-    // Or: httpServer.listen(...
     if (!content.includes('initMultiUserChatServer(httpServer)')) {
-        // Find where httpServer is created
-        const serverMatch = content.match(/(const\s+server\s*=\s*http\.createServer\(app\))/);
-        if (serverMatch) {
-            const insertAfter = serverMatch.index + serverMatch[0].length;
-            content = content.slice(0, insertAfter) + '\n' + INIT_LINE + content.slice(insertAfter);
+        const m = content.match(/const\s+server\s*=\s*http\.createServer\(app\)/);
+        if (m) {
+            const pos = m.index + m[0].length;
+            content = content.slice(0, pos) + '\n' + INIT_LINE + content.slice(pos);
             modified = true;
         }
     }
 
-    // Add routes
+    // Add routes before server.listen
     if (!content.includes('addMultiUserRoutes(app)')) {
-        const listenMatch = content.match(/(server\.listen\(|httpServer\.listen\()/);
-        if (listenMatch) {
-            const insertBefore = listenMatch.index;
-            content = content.slice(0, insertBefore) + ROUTES_LINE + '\n' + content.slice(insertBefore);
+        const m = content.match(/server\.listen\(/);
+        if (m) {
+            content = content.slice(0, m.index) + ROUTES_LINE + '\n' + content.slice(m.index);
             modified = true;
         }
     }
 
     if (modified) {
-        writeFileSync(SERVER_JS_PATH, content, 'utf-8');
-        console.log('✓ Successfully patched server.js for Multi-User Chat Rooms.');
-        console.log('  Please restart SillyTavern for changes to take effect.');
+        writeFileSync(serverJs, content, 'utf-8');
+        console.log(`✓ Patched ${serverJs} successfully.`);
+        console.log('  Restart SillyTavern for changes to take effect.');
     } else {
-        console.log('⚠ Could not automatically patch server.js.');
-        console.log('  Please add the following lines manually:');
-        console.log(`\n  1. Add import near top:`);
-        console.log(`     ${IMPORT_LINE}`);
-        console.log(`\n  2. After httpServer creation:`);
-        console.log(`     ${INIT_LINE}`);
-        console.log(`\n  3. Before server.listen():`);
-        console.log(`     ${ROUTES_LINE}`);
+        console.log('⚠ Could not find insertion points. Add manually:');
+        console.log(`\n${IMPORT_LINE}\n${INIT_LINE}\n${ROUTES_LINE}`);
     }
 
 } catch (err) {
-    console.error('Failed to setup Multi-User Chat server plugin:', err.message);
-    console.error('Please add the following to your server.js manually:');
-    console.error(`\n  ${IMPORT_LINE}`);
-    console.error(`  ${INIT_LINE}`);
-    console.error(`  ${ROUTES_LINE}`);
+    console.error('Error:', err.message);
 }
