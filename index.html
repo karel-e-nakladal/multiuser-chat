@@ -1,0 +1,136 @@
+<div id="multiuser-chat-container" class="multiuser-chat-container">
+    <div class="mu-header">
+        <div class="mu-header-left">
+            <h3 class="mu-title">
+                <i class="fa-solid fa-users"></i>
+                Multi-User Chat
+            </h3>
+            <span id="mu-connection-status" class="mu-status mu-status-disconnected">Disconnected</span>
+        </div>
+        <div class="mu-header-right">
+            <button id="mu-btn-connect" class="mu-btn mu-btn-primary" title="Connect to server">
+                <i class="fa-solid fa-plug"></i> Connect
+            </button>
+            <button id="mu-btn-settings" class="mu-btn mu-btn-icon" title="Settings">
+                <i class="fa-solid fa-cog"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Connection Panel -->
+    <div id="mu-connection-panel" class="mu-panel">
+        <div class="mu-form-group">
+            <label>Username</label>
+            <input type="text" id="mu-username" placeholder="Enter your display name" maxlength="30" />
+        </div>
+        <div class="mu-form-group">
+            <label>Server URL <small>(leave empty for same server)</small></label>
+            <input type="text" id="mu-server-url" placeholder="http://localhost:8000" />
+        </div>
+        <button id="mu-btn-do-connect" class="mu-btn mu-btn-success">
+            <i class="fa-solid fa-plug"></i> Connect to Server
+        </button>
+    </div>
+
+    <!-- Room Join/Create Panel -->
+    <div id="mu-room-actions" class="mu-panel hidden">
+        <div class="mu-tabs">
+            <button class="mu-tab active" data-tab="create">Create Room</button>
+            <button class="mu-tab" data-tab="join">Join Room</button>
+        </div>
+
+        <div id="mu-tab-create" class="mu-tab-content">
+            <div class="mu-form-group">
+                <label>Room Name</label>
+                <input type="text" id="mu-room-name" placeholder="My Chat Room" maxlength="50" />
+            </div>
+            <div class="mu-form-group">
+                <label class="mu-checkbox">
+                    <input type="checkbox" id="mu-group-chat-toggle" />
+                    <span>Enable Group Chat (multiple AI characters)</span>
+                </label>
+            </div>
+            <div id="mu-character-select" class="mu-character-select hidden">
+                <label>AI Characters in Room</label>
+                <div id="mu-character-list" class="mu-character-list"></div>
+            </div>
+            <button id="mu-btn-create-room" class="mu-btn mu-btn-success">
+                <i class="fa-solid fa-plus-circle"></i> Create Room
+            </button>
+        </div>
+
+        <div id="mu-tab-join" class="mu-tab-content hidden">
+            <div class="mu-form-group">
+                <label>Invite Code</label>
+                <div class="mu-invite-input-wrap">
+                    <input type="text" id="mu-invite-code" placeholder="XXX-XXX-XXX" maxlength="11" />
+                    <button id="mu-btn-validate-invite" class="mu-btn mu-btn-secondary">
+                        <i class="fa-solid fa-search"></i> Validate
+                    </button>
+                </div>
+            </div>
+            <div id="mu-invite-preview" class="hidden"></div>
+            <button id="mu-btn-join-room" class="mu-btn mu-btn-success">
+                <i class="fa-solid fa-door-open"></i> Join Room
+            </button>
+        </div>
+    </div>
+
+    <!-- Active Room Panel -->
+    <div id="mu-room-panel" class="mu-panel hidden">
+        <div class="mu-room-header">
+            <div class="mu-room-info">
+                <h4 id="mu-room-display-name">Room Name</h4>
+                <span id="mu-room-type-badge" class="mu-badge">Single Chat</span>
+                <span id="mu-user-count" class="mu-badge mu-badge-users">0 users</span>
+            </div>
+            <div class="mu-room-actions">
+                <button id="mu-btn-invite" class="mu-btn mu-btn-accent" title="Generate invite code">
+                    <i class="fa-solid fa-user-plus"></i> Invite
+                </button>
+                <button id="mu-btn-leave-room" class="mu-btn mu-btn-danger" title="Leave room">
+                    <i class="fa-solid fa-right-from-bracket"></i> Leave
+                </button>
+            </div>
+        </div>
+
+        <div id="mu-invite-display" class="mu-invite-display hidden">
+            <div class="mu-invite-card">
+                <span class="mu-invite-label">Invite Code:</span>
+                <span id="mu-invite-code-display" class="mu-invite-code-text"></span>
+                <button id="mu-btn-copy-invite" class="mu-btn mu-btn-sm">
+                    <i class="fa-solid fa-copy"></i> Copy
+                </button>
+                <span id="mu-invite-expiry" class="mu-invite-expiry"></span>
+            </div>
+        </div>
+
+        <div class="mu-section">
+            <h5 class="mu-section-title"><i class="fa-solid fa-users"></i> Participants</h5>
+            <div id="mu-user-list" class="mu-user-list"></div>
+        </div>
+
+        <div class="mu-section">
+            <h5 class="mu-section-title"><i class="fa-solid fa-message"></i> Recent Messages</h5>
+            <div id="mu-message-feed" class="mu-message-feed"></div>
+        </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div id="mu-settings-panel" class="mu-panel hidden">
+        <h4>Settings</h4>
+        <div class="mu-form-group">
+            <label class="mu-checkbox">
+                <input type="checkbox" id="mu-auto-connect" />
+                <span>Auto-connect on startup</span>
+            </label>
+        </div>
+        <div class="mu-form-group">
+            <label class="mu-checkbox">
+                <input type="checkbox" id="mu-show-typing" />
+                <span>Show typing indicators</span>
+            </label>
+        </div>
+        <button id="mu-btn-save-settings" class="mu-btn mu-btn-primary">Save Settings</button>
+    </div>
+</div>
